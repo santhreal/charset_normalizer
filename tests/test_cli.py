@@ -19,6 +19,22 @@ class TestCommandLineInterface(unittest.TestCase):
     def test_simple_no_input(self):
         self.assertFalse(query_yes_no("Are u willing to chill a little bit ?"))
 
+    def test_eof_on_input_uses_default(self):
+        def raise_eof(*args):
+            raise EOFError
+
+        with patch("builtins.input", raise_eof):
+            self.assertFalse(query_yes_no("Replace?", default="no"))
+            self.assertTrue(query_yes_no("Replace?", default="yes"))
+
+    def test_normalize_replace_eof_declines_cleanly(self):
+        """-n -r with EOF on stdin must exit cleanly (decline), not traceback."""
+        with patch("builtins.input", side_effect=EOFError):
+            code = cli_detect(
+                [DIR_PATH + "/data/sample-arabic-1.txt", "--normalize", "--replace"]
+            )
+        self.assertEqual(code, 0)
+
     def test_single_file(self):
         self.assertEqual(0, cli_detect([DIR_PATH + "/data/sample-arabic-1.txt"]))
 

@@ -18,7 +18,10 @@ def query_yes_no(question: str, default: str = "yes") -> bool:  # Defensive:
     prompt = " [Y/n] " if default == "yes" else " [y/N] "
 
     while True:
-        choice = input(question + prompt).strip().lower()
+        try:
+            choice = input(question + prompt).strip().lower()
+        except EOFError:
+            return default == "yes"
         if not choice:
             return default == "yes"
         if choice in ("y", "yes"):
