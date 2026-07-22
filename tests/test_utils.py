@@ -4,7 +4,7 @@ import logging
 
 import pytest
 
-from charset_normalizer.utils import cp_similarity, is_accentuated, set_logging_handler
+from charset_normalizer.utils import cp_similarity, is_accentuated, remove_accent, set_logging_handler
 
 
 @pytest.mark.parametrize(
@@ -33,6 +33,21 @@ def test_is_accentuated(character, expected_is_accentuated):
     assert (
         is_accentuated(character) is expected_is_accentuated
     ), "is_accentuated behavior incomplete"
+
+
+@pytest.mark.parametrize(
+    "character, expected",
+    [
+        ("é", "e"),
+        ("à", "a"),
+        (" ", " "),  # NBSP: <noBreak>
+        ("ª", "ª"),  # feminine ordinal: <super>
+        ("²", "²"),  # superscript two: <super>
+        ("µ", "µ"),  # micro sign: <compat>
+    ],
+)
+def test_remove_accent(character, expected):
+    assert remove_accent(character) == expected
 
 
 @pytest.mark.parametrize(

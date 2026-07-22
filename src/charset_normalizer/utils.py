@@ -72,7 +72,8 @@ def is_accentuated(character: str) -> bool:
 @lru_cache(maxsize=UTF8_MAXIMAL_ALLOCATION)
 def remove_accent(character: str) -> str:
     decomposed: str = unicodedata.decomposition(character)
-    if not decomposed:
+    # Tagged forms (<noBreak>, <super>, <compat>, ...) are not accent bases.
+    if not decomposed or decomposed.startswith("<"):
         return character
 
     codes: list[str] = decomposed.split(" ")
