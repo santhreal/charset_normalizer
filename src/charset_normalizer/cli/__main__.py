@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import sys
 import typing
 from os.path import abspath, basename, dirname, join, realpath
@@ -196,7 +197,8 @@ def cli_detect(argv: list[str] | None = None) -> int:
         print("Use --force in addition of --replace only.", file=sys.stderr)
         return 1
 
-    if args.threshold < 0.0 or args.threshold > 1.0:
+    # NaN/Inf compare false against every bound, so the old range check let them through.
+    if not math.isfinite(args.threshold) or args.threshold < 0.0 or args.threshold > 1.0:
         if args.files:
             for my_file in args.files:
                 my_file.close()

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import unittest
-from os import pardir, path, remove
+from os import listdir, pardir, path, remove
 from os.path import exists
+from os.path import join as path_join
 from unittest.mock import patch
 
 from charset_normalizer.cli import cli_detect, query_yes_no
@@ -183,6 +184,32 @@ class TestCommandLineInterface(unittest.TestCase):
         self.assertEqual(
             cli_detect([DIR_PATH + "/data/sample-arabic-1.txt", "--force"]), 1
         )
+
+    def test_threshold_rejects_nan(self):
+        """--threshold nan bypassed the 0..1 check (NaN comparisons are false)."""
+        sample = DIR_PATH + "/data/sample-arabic-1.txt"
+        for value in ("nan", "NaN", "+nan", "inf", "-inf"):
+            with self.subTest(value=value):
+                # Prefer --threshold=VALUE so leading '-' is not a new flag.
+                self.assertEqual(
+                    cli_detect([sample, f"--threshold={value}"]), 1
+                )
+
+    def test_threshold_nan_normalize_does_not_write_binary(self):
+        """Binary with --normalize -t nan must not invent an encoded sibling file."""
+        from os import urandom
+        from tempfile import TemporaryDirectory
+
+        with TemporaryDirectory() as tmp:
+            path = path_join(tmp, "payload.bin")
+            with open(path, "wb") as fp:
+                fp.write(urandom(2048))
+            self.assertEqual(cli_detect([path, "--normalize", "--threshold", "nan"]), 1)
+            self.assertEqual(
+                [name for name in listdir(tmp) if name != "payload.bin"],
+                [],
+                "nan threshold must fail closed before normalize writes",
+            )
 
 
 if __name__ == "__main__":
